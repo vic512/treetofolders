@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Folder Structure Generator</title>
+    <title>Folder Structure to Bash Script Generator</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -36,46 +36,56 @@
     </div>
     <button onclick="generateScript()">Generate Script</button>
 
-<script>
-    function generateScript() {
-        const folderStructure = document.getElementById("folderStructure").value;
-        const lines = folderStructure.split("\n");
-        let script = "#!/bin/bash\n\n";
+    <script>
+        function generateScript() {
+            const folderStructure = document.getElementById("folderStructure").value;
+            const lines = folderStructure.split("\n");
+            let script = "#!/bin/bash\n\n";
 
-        let pathStack = []; // To maintain the current directory hierarchy
+            const pathStack = []; // Tracks the full path stack
 
-        for (let line of lines) {
-            const trimmedLine = line.trim();
+            lines.forEach((line, index) => {
+                console.log(`Processing line ${index + 1}: "${line}"`);
 
-            if (trimmedLine === "") continue;
+                if (!line.trim()) {
+                    console.log(`Skipping empty line ${index + 1}`);
+                    return; // Skip empty lines
+                }
 
-            // Count the depth of the current line
-            const depth = (line.match(/^\s+/) || [""])[0].length / 4; // Assuming 4 spaces per level
+                // Clean line: Remove leading tree characters (│, ├, └, ─) and whitespace
+                const cleanLine = line.replace(/^[│├└─\s]+/g, "").trim();
+                console.log(`Cleaned line ${index + 1}: "${cleanLine}"`);
 
-            // Extract the name of the folder/file
-            const name = trimmedLine.replace(/[├─│└]+/g, "").trim();
+                // Calculate depth: Count leading tree characters and spaces
+                const depth = (line.match(/^[│├└─\s]+/) || [""])[0].replace(/[^│├└─]/g, "").length;
+                console.log(`Depth of line ${index + 1}: ${depth}`);
 
-            // Adjust the path stack based on depth
-            while (pathStack.length > depth) {
-                pathStack.pop();
-            }
+                // Adjust stack for depth
+                while (pathStack.length > depth) {
+                    const removed = pathStack.pop();
+                    console.log(`Popped from stack: "${removed}"`);
+                }
 
-            // Add the current folder/file to the path
-            const currentPath = [...pathStack, name].join("/");
+                // Build the full path
+                const parentPath = pathStack.length > 0 ? pathStack[pathStack.length - 1] : "";
+                const currentPath = parentPath ? `${parentPath}/${cleanLine}` : cleanLine;
+                console.log(`Current path: "${currentPath}"`);
 
-            if (trimmedLine.includes(".")) {
-                // If it's a file
-                script += `touch "${currentPath}"\n`;
-            } else {
-                // If it's a folder
-                script += `mkdir -p "${currentPath}"\n`;
-                pathStack.push(name); // Add folder to stack
-            }
+                // Add to script
+                if (cleanLine.includes(".")) {
+                    script += `touch "${currentPath}"\n`; // File
+                    console.log(`Added file: "${currentPath}"`);
+                } else {
+                    script += `mkdir -p "${currentPath}"\n`; // Folder
+                    pathStack.push(currentPath); // Push the folder to the stack
+                    console.log(`Added folder: "${currentPath}"`);
+                    console.log(`Updated stack: [${pathStack.join(", ")}]`);
+                }
+            });
+
+            document.getElementById("bashScript").value = script;
+            console.log("Generated Bash Script:\n" + script);
         }
-
-        document.getElementById("bashScript").value = script;
-    }
-</script>
-
+    </script>
 </body>
 </html>
