@@ -36,34 +36,46 @@
     </div>
     <button onclick="generateScript()">Generate Script</button>
 
-    <script>
-        function generateScript() {
-            const folderStructure = document.getElementById("folderStructure").value;
-            const lines = folderStructure.split("\n");
-            let script = "#!/bin/bash\n\n";
+<script>
+    function generateScript() {
+        const folderStructure = document.getElementById("folderStructure").value;
+        const lines = folderStructure.split("\n");
+        let script = "#!/bin/bash\n\n";
 
-            for (let line of lines) {
-                const trimmedLine = line.trim();
+        let pathStack = []; // To maintain the current directory hierarchy
 
-                if (trimmedLine === "") continue;
+        for (let line of lines) {
+            const trimmedLine = line.trim();
 
-                // Count indents to determine depth
-                const depth = (line.match(/^\s+/) || [""])[0].length;
-                const isFile = trimmedLine.includes(".");
+            if (trimmedLine === "") continue;
 
-                // Remove characters used for tree representation
-                const name = trimmedLine.replace(/[├─│└]+/g, "").trim();
+            // Count the depth of the current line
+            const depth = (line.match(/^\s+/) || [""])[0].length / 4; // Assuming 4 spaces per level
 
-                // Create the mkdir or touch command
-                if (isFile) {
-                    script += `${" ".repeat(depth)}touch "${name}"\n`;
-                } else {
-                    script += `${" ".repeat(depth)}mkdir -p "${name}"\n`;
-                }
+            // Extract the name of the folder/file
+            const name = trimmedLine.replace(/[├─│└]+/g, "").trim();
+
+            // Adjust the path stack based on depth
+            while (pathStack.length > depth) {
+                pathStack.pop();
             }
 
-            document.getElementById("bashScript").value = script;
+            // Add the current folder/file to the path
+            const currentPath = [...pathStack, name].join("/");
+
+            if (trimmedLine.includes(".")) {
+                // If it's a file
+                script += `touch "${currentPath}"\n`;
+            } else {
+                // If it's a folder
+                script += `mkdir -p "${currentPath}"\n`;
+                pathStack.push(name); // Add folder to stack
+            }
         }
-    </script>
+
+        document.getElementById("bashScript").value = script;
+    }
+</script>
+
 </body>
 </html>
