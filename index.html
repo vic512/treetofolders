@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Folder Structure Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        textarea {
+            width: 48%;
+            height: 400px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Folder Structure to Bash Script Generator</h1>
+    <div class="container">
+        <textarea id="folderStructure" placeholder="Paste your folder structure tree here..."></textarea>
+        <textarea id="bashScript" placeholder="Generated Bash script will appear here..." readonly></textarea>
+    </div>
+    <button onclick="generateScript()">Generate Script</button>
+
+    <script>
+        function generateScript() {
+            const folderStructure = document.getElementById("folderStructure").value;
+            const lines = folderStructure.split("\n");
+            let script = "#!/bin/bash\n\n";
+
+            for (let line of lines) {
+                const trimmedLine = line.trim();
+
+                if (trimmedLine === "") continue;
+
+                // Count indents to determine depth
+                const depth = (line.match(/^\s+/) || [""])[0].length;
+                const isFile = trimmedLine.includes(".");
+
+                // Remove characters used for tree representation
+                const name = trimmedLine.replace(/[├─│└]+/g, "").trim();
+
+                // Create the mkdir or touch command
+                if (isFile) {
+                    script += `${" ".repeat(depth)}touch "${name}"\n`;
+                } else {
+                    script += `${" ".repeat(depth)}mkdir -p "${name}"\n`;
+                }
+            }
+
+            document.getElementById("bashScript").value = script;
+        }
+    </script>
+</body>
+</html>
